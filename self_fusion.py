@@ -13,6 +13,19 @@ gyroscope = data[:, 1:4]
 accelerometer = data[:, 4:7]
 magnetometer = data[:, 7:10]
 
+# soft iron correction
+A = np.array(
+    [[0.9491, -0.0756, 0.0041],
+    [-0.0756, 1.2025, -0.0347],
+    [0.0041, -0.0347, 0.8816]]
+)
+
+# hard iron correction
+b = np.array([-0.4256, 2.6989, -6.1037])
+
+calibrated_mag = magnetometer - np.transpose(b)
+calibrated_mag = np.dot(calibrated_mag, A)
+
 figure, axes = plt.subplots(nrows=5, sharex=True)
 
 axes[0].plot(timestamp, gyroscope[:, 0], "tab:red", label="Gyroscope X")
@@ -31,9 +44,9 @@ axes[1].set_title("Accelerometer Readings")
 axes[1].grid()
 axes[1].legend()
 
-axes[2].plot(timestamp, magnetometer[:, 1], "tab:green", label="Magnetometer Y")
-axes[2].plot(timestamp, magnetometer[:, 0], "tab:red", label="Magnetometer X")
-axes[2].plot(timestamp, magnetometer[:, 2], "tab:blue", label="Magnetometer Z")
+axes[2].plot(timestamp, calibrated_mag[:, 1], "tab:green", label="Magnetometer Y")
+axes[2].plot(timestamp, calibrated_mag[:, 0], "tab:red", label="Magnetometer X")
+axes[2].plot(timestamp, calibrated_mag[:, 2], "tab:blue", label="Magnetometer Z")
 axes[2].set_ylabel("uF")
 axes[2].set_title("Magnetometer Readings")
 axes[2].grid()
@@ -64,7 +77,7 @@ gravity = np.empty((len(timestamp), 3))
 for index in range(len(timestamp)):
     gyroscope[index] = offset.update(gyroscope[index])
 
-    ahrs.update(gyroscope[index], accelerometer[index], magnetometer[index], delta_time[index])
+    ahrs.update(gyroscope[index], accelerometer[index], calibrated_mag[index], delta_time[index])
 
     euler[index] = ahrs.quaternion.to_euler()
 
