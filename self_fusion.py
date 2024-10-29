@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # Import sensor data ("short_walk.csv" or "long_walk.csv")
-data = np.genfromtxt("data_files/z_accel.csv", delimiter=",", skip_header=1)
+data = np.genfromtxt("data_files/y_accel.csv", delimiter=",", skip_header=1)
 
 # sample rate of our sensor
 sample_rate = 50 
@@ -15,17 +15,18 @@ magnetometer = data[:, 7:10]
 
 # soft iron correction
 A = np.array(
-    [[0.9491, -0.0756, 0.0041],
-    [-0.0756, 1.2025, -0.0347],
-    [0.0041, -0.0347, 0.8816]]      
+    [[1.0166, -0.0141, -0.0046],
+    [-0.0141, 0.9878, 0.0090],
+    [-0.0046, 0.0090, 0.9961]]      
 )
 
 # hard iron correction
-b = np.array([-0.4256, 2.6989, -6.1037])
+b = np.array([-1.7561, -0.7667, -9.914])
 
 calibrated_mag = magnetometer - b
 calibrated_mag = np.dot(calibrated_mag, A)
 # calibrated_mag = magnetometer
+calibrated_mag[:,1:3] = -calibrated_mag[:,1:3]
 
 figure, axes = plt.subplots(nrows=5, sharex=True)
 
@@ -90,8 +91,8 @@ for index in range(len(timestamp)):
                                        ahrs_internal_states.magnetometer_ignored,
                                        ahrs_internal_states.magnetic_recovery_trigger,])
 
-    acceleration[index] = 9.81 * ahrs.earth_acceleration  # convert g to m/s/s
-    gravity[index] = 9.81 * ahrs.gravity
+    acceleration[index] = ahrs.linear_acceleration  
+    gravity[index] = ahrs.gravity
 
     ahrs_flags = ahrs.flags
     flags[index] = np.array(
@@ -113,7 +114,8 @@ axes[4].plot(timestamp, acceleration[:, 0], "tab:red", label="Acceleration X")
 axes[4].plot(timestamp, acceleration[:, 1], "tab:green", label="Acceleration Y")
 axes[4].plot(timestamp, acceleration[:, 2], "tab:blue", label="Acceleration Z")
 axes[4].set_ylabel("g")
-axes[4].set_title("Accelerometer Readings")
+axes[4].set_title("Linear Acceleration")
+# axes[4].set_ylim((-3, 3))
 axes[4].grid()
 axes[4].legend()
     
@@ -134,6 +136,7 @@ axes2[0].plot(timestamp, euler[:, 1], "tab:green", label="Pitch")
 axes2[0].plot(timestamp, euler[:, 2], "tab:blue", label="Yaw")
 axes2[0].set_ylabel("Degrees")
 axes2[0].grid()
+axes2[0].set_ylim((-200,200))
 axes2[0].legend()
 
 # Plot initialising flag
