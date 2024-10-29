@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # Import sensor data ("short_walk.csv" or "long_walk.csv")
-data = np.genfromtxt("data_files/forward_back.csv", delimiter=",", skip_header=1)
+data = np.genfromtxt("data_files/z_accel.csv", delimiter=",", skip_header=1)
 
 # sample rate of our sensor
 sample_rate = 50 
@@ -17,14 +17,15 @@ magnetometer = data[:, 7:10]
 A = np.array(
     [[0.9491, -0.0756, 0.0041],
     [-0.0756, 1.2025, -0.0347],
-    [0.0041, -0.0347, 0.8816]]
+    [0.0041, -0.0347, 0.8816]]      
 )
 
 # hard iron correction
 b = np.array([-0.4256, 2.6989, -6.1037])
 
-calibrated_mag = magnetometer - np.transpose(b)
+calibrated_mag = magnetometer - b
 calibrated_mag = np.dot(calibrated_mag, A)
+# calibrated_mag = magnetometer
 
 figure, axes = plt.subplots(nrows=5, sharex=True)
 
@@ -58,7 +59,7 @@ axes[4].set_xlabel("time/s")
 offset = imufusion.Offset(sample_rate)
 ahrs = imufusion.Ahrs()
 
-ahrs.settings = imufusion.Settings(imufusion.CONVENTION_NWU,
+ahrs.settings = imufusion.Settings(imufusion.CONVENTION_ENU,
                                    0.5,  # gain, chooses between gyro or mag+accel
                                    250,  # gyroscope range 250 for icm
                                    10,  # acceleration rejection
