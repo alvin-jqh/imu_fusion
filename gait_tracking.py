@@ -6,13 +6,14 @@ import matplotlib.pyplot as pyplot
 import numpy
 
 # Import sensor data ("short_walk.csv" or "long_walk.csv")
-data = numpy.genfromtxt("up_down.csv", delimiter=",", skip_header=1)
+data = numpy.genfromtxt("data_files/forward_back.csv", delimiter=",", skip_header=1)
 
-sample_rate = 400  # 400 Hz
+sample_rate = 50 # 400 Hz
 
 timestamp = data[:, 0]
 gyroscope = data[:, 1:4]
 accelerometer = data[:, 4:7]
+magnetometer = data[:, 7:10]
 
 # Plot sensor data
 figure, axes = pyplot.subplots(nrows=6, sharex=True, gridspec_kw={"height_ratios": [6, 6, 6, 2, 1, 1]})
@@ -42,7 +43,7 @@ ahrs.settings = imufusion.Settings(imufusion.CONVENTION_NWU,
                                    0.5,  # gain
                                    250,  # gyroscope range 2500 for example data
                                    10,  # acceleration rejection
-                                   0,  # magnetic rejection
+                                   10,  # magnetic rejection
                                    5 * sample_rate)  # rejection timeout = 5 seconds
 
 # Process sensor data

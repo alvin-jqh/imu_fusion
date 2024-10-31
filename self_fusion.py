@@ -102,6 +102,34 @@ for index in range(len(timestamp)):
             ahrs_flags.magnetic_recovery,
         ])
     
+# Identify moving periods
+is_moving = np.empty(len(timestamp))
+
+for index in range(len(timestamp)):
+    is_moving[index] = np.sqrt(acceleration[index].dot(acceleration[index])) > 5/9.81
+
+margin = int(0.1 * sample_rate)  # 100 ms
+
+for index in range(len(timestamp) - margin):
+    is_moving[index] = any(is_moving[index:(index + margin)])  # add leading margin
+
+for index in range(len(timestamp) - 1, margin, -1):
+    is_moving[index] = any(is_moving[(index - margin):index])  # add trailing margin
+
+# Calculate velocity (includes integral drift)
+velocity = np.zeros((len(timestamp), 3))
+
+for index in range(len(timestamp)):
+    if is_moving[index]:  # only integrate if moving
+        velocity[index] = velocity[index - 1] + delta_time[index] * acceleration[index]
+
+# Calculate position
+position = np.zeros((len(timestamp), 3))
+
+for index in range(len(timestamp)):
+    position[index] = position[index - 1] + delta_time[index] * velocity[index]
+
+## bunch of plotting    
 axes[3].plot(timestamp, gravity[:, 0], "tab:red", label="Gravity X")
 axes[3].plot(timestamp, gravity[:, 1], "tab:green", label="Gravity Y")
 axes[3].plot(timestamp, gravity[:, 2], "tab:blue", label="Gravity Z")
@@ -172,5 +200,13 @@ axes2[9].grid()
 axes2[9].legend()
 
 plot_bool(axes2[10], timestamp, flags[:, 3], "Magnetic recovery")
+
+fig3 = plt.figure()
+axes3 = fig3.add_subplot(projection='3d')
+axes3.scatter(position[:,0], position[:,1], timestamp)
+
+axes3.set_xlabel('X')
+axes3.set_ylabel('Y')
+axes3.set_zlabel('Time')
 
 plt.show()
